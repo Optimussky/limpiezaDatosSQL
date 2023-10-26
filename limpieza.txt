@@ -1,3 +1,8 @@
+## SQL para limpieza de datos - Proyecto completo
+# https://www.youtube.com/watch?v=hoOBydHUH6U&t=908s
+
+
+
 #SELECT `Id?empleado`, Name, Apellido, birth_date, género, area, salary, star_date, finish_date, promotion_date, `type`
 #FROM clean.limpieza
 #where género like 'hombre'
