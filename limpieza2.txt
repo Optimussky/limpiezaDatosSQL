@@ -1,0 +1,399 @@
+SELECT id_empleado, name, apellido, birth_date, genero, area, salary, star_date, finish_date, promotion_date, `type`
+FROM clean.limpieza;
+
+use clean;
+
+DELIMITER //
+CREATE PROCEDURE limp()
+BEGIN
+	SELECT FROM limpieza;
+END //
+DELIMITER ;
+
+call limp();
+
+
+
+## Limpiar espacios en campos de texto
+SELECT Name, trim(name) as Name
+FROM limpieza
+WHERE length(Name) - length(trim(Name)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE conduplicados SET NAME = TRIM(Name)
+WHERE length(Name) - length(trim(Name)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE conduplicados SET NAME = TRIM(Apellido)
+WHERE length(Apellido) - length(trim(Apellido)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE conduplicados SET NAME = TRIM(genero)
+WHERE length(genero) - length(trim(genero)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE conduplicados SET NAME = TRIM(area)
+WHERE length(area) - length(trim(area)) > 0;
+
+## modificamos el campo de salary para volverlo entero
+alter table alfabetico_jun change column `DIR EJEC` DIR_EJEC VARCHAR (50)
+
+
+### Eliminar caracteres y Convertir datos a números con decimal
+UPDATE limpieza SET area
+
+SELECT salary,
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2)) AS salary2 from conduplicados;
+
+## Hacer UPDATE
+UPDATE conduplicados SET salary = 
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2));
+
+
+## CREAR TABLA TEMPORAL SIN DUPLICADOS
+CREATE TEMPORARY TABLE temp_limpieza AS
+SELECT DISTINCT * FROM conduplicados;
+
+select COUNT(*) as copia from temp_limpieza
+select COUNT(*) as original from conduplicados
+
+## CONVERTIR TABLA TEMPORAL A PERMANENTE
+CREATE TABLE limpieza AS SELECT * FROM temp_limpieza;
+
+### ELIMINAR TABLA CON DATOS TEMPORALES
+DROP TABLE conduplicados;
+
+
+### ELIMINAR DOBLES ESPACIOS EN CAMPOS DE TEXTO
+## CREAMOS DOBLES ESPACIOS PARA HACER LA PRACTICA
+UPDATE limpieza SET area = REPLACE(area,' ','     ');
+
+### USAMOS UNA EXPRESIÓN REGULAR PARA ELMINAR MÁS DE DOS ESPACIOS EN UN CAMPO
+## REGEXP '\\s{2,}' = busca dos o mas espacios
+## REGEXP '\\s{210,}' = si cambiamos el 2 por el 10, buscaría 10 o más espacios en blanco
+SELECT area FROM limpieza
+WHERE area REGEXP '\\s{2,}';
+
+## HACEMOS NUESTRA CONSULTA DE PRUEBA
+SELECT area, TRIM(REGEXP_REPLACE(area, '\\s+',' ')) AS ensayo FROM limpieza;
+
+## HACEMOS EL UPDATE DE area Y USAMOS NUESTRA CONSULTA DE ENSAYO PARA MODIFICAR REALMENTE
+UPDATE limpieza SET area = 
+TRIM(REGEXP_REPLACE(area, '\\s+',' '));
+
+
+
+## CAMBIAR EL CONTENIDO DE UNA CELDA USANDO LA SENTENCIA CASE
+# REEMPLAZANDO EN genero = hombre por genero = masculino
+
+## INICIAMOS NUESTA CONSULTA DE ENSAYO ANTES DE HACER UN UPDATE
+SELECT genero ,
+CASE 
+	WHEN genero = 'hombre' THEN 'masculino'
+	WHEN genero = 'mujer' THEN 'femenino'
+	ELSE 'otro'
+END as generoS
+FROM limpieza;
+
+## AHORA QUE YA TENEMOS NUESTRA CONSULTA DE ENSAYO CORRECTA INICIAMOS EL UPDATE
+UPDATE limpieza SET genero = CASE 
+	WHEN genero = 'hombre' THEN 'masculino'
+	WHEN genero = 'mujer' THEN 'femenino'
+	ELSE 'otro'
+END;
+
+
+## COLUMNA TYPE CAMBIAR EL VALOR PARA DARLE SIGNIFICADO A 0 Y 1
+## REVISION DEL TIPO DE DATO DESDE --DESCRIBE TABLE
+## 0 = CONTRATO HIBRIDO 1 = TIENE CONTRATO REMOTO
+
+DESCRIBE limpieza;
+## como type es INT debemos cambiralo previamente para poder introducir texto despues
+
+## CAMBIAR TIPO DE DATO EN LA COLUMNA type
+ALTER TABLE limpieza MODIFY COLUMN type TEXT;
+DESCRIBE limpieza;
+
+## HACEMOS NUESTRA CONSULTA DE ENSAYO
+SELECT type,
+CASE 
+	WHEN type = 1 THEN 'Remoto'
+	WHEN type = 0 THEN 'Hibrido'
+	ELSE 'Otro'
+END as typoDatoText
+from limpieza;
+
+## DESPUES DE NUESTRA CONSULTA DE ENSAYO INICIAMOS EL UPDATE
+
+UPDATE limpieza SET type = CASE 
+	WHEN type = 1 THEN 'Remoto'
+	WHEN type = 0 THEN 'Hibrido'
+	ELSE 'Otro'
+END;
+
+## CAMBIAR EL NOMBRE DE UNA COLUMNA DE LA TABLA
+alter table limpieza  change column `type` tipo VARCHAR(25);
+describe limpieza; 
+
+
+## DAR FORMATO A UNA COLUMNA DE LA TABLA: DE TEXTO A NUMERO
+# ## modificamos el campo de salary para volverlo entero(int), PERO PRIMERO HAY QUE DARLE EL FORMATO NECESARIO AL CONTENIDO DE LA CELDA
+
+#alter table limpieza modify column salary int null;
+## EN EL CAMPO SALARY QUITAR:
+# QUITAR EL SIGNO: $ Y EL SIGNO: ,
+SELECT salary,
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2)) AS salary2 from limpieza;
+
+## Hacer UPDATE
+UPDATE limpieza  SET salary = 
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2));
+ 
+## CAMBIAR EL TIPO DE DATO EN LA COLUMNA salary
+ALTER TABLE limpieza modify column salary INT null;
+
+
+## CAMBIAR EL CAMPO TEXTO A FECHA Y DARLE FORMATO
+SELECT birth_date from limpieza;
+
+## HACEMOS NUESTRA CONSULTA DE ENSAYO PARA EL CAMPO birth_date
+SELECT birth_date, CASE
+	WHEN birth_date LIKE '%/%' THEN date_format(str_to_date(birth_date, '%m/%d/%y'), '%Y-%m-%d')
+	WHEN birth_date LIKE '%-%' THEN date_format(str_to_date(birth_date, '%m/%d/%y'), '%Y-%m-%d')
+ELSE null
+END as fecha_nac
+from limpieza;
+
+###### NOTA LA FECHA NO SE VERÁ IGUAL AL FORMATO ORIGINAL SIN EMBARGO AL HACER UPDATE SERÁ CORRECTA ######
+
+
+
+### HACEMOS EL UPDATE
+UPDATE limpieza
+SET birth_date = CASE
+	WHEN birth_date LIKE '%/%' THEN date_format(str_to_date(birth_date, '%m/%d/%Y'), '%Y-%m-%d')
+	WHEN birth_date LIKE '%-%' THEN date_format(str_to_date(birth_date, '%m/%d/%Y'), '%Y-%m-%d')
+ELSE null
+END;
+
+## MODIFICAR LA PROPIEDAD DE LA COLUMNA
+ALTER TABLE limpieza MODIFY COLUMN birth_date date;
+
+## 
+select star_date from limpieza;
+------ ENSAYO: - DAR FORMATO A LA FECHA
+SELECT star_date, CASE 
+	WHEN star_date LIKE '%/%' THEN date_format(str_to_date(star_date , '%m/%d/%Y'), '%Y-%m-%d')
+	WHEN star_date LIKE '%-%' THEN date_format(str_to_date(star_date , '%m/%d/%Y'), '%Y-%m-%d')
+	ELSE NULL
+END AS new_star_date
+FROM limpieza;
+
+----------Actualizar la tabla
+UPDATE limpieza
+SET star_date  = CASE 
+	WHEN star_date LIKE '%/%' THEN date_format(str_to_date(star_date ,'%m/%d/%Y'), '%Y-%m-%d')
+	WHEN star_date LIKE '%-%' THEN date_format(str_to_date(star_date ,'%m-%d-%Y'), '%Y-%m-%d')
+	ELSE NULL 
+END;
+
+## MODIFICAR LA PROPIEDAD DE LA COLUMNA
+ALTER TABLE limpieza MODIFY COLUMN star_date date;
+
+##############################################
+# HACER LO MISMO CON LAS SIGUIENTES COLUMNAS: finish_date , promotion_date
+## 
+select finish_date from limpieza;
+#### EXPLORANDO OTRAS FUNCIONES DE FECHA Y HORA
+
+---## ENSAYOS Hacer consultas de como quedarían los datos si queremos probar diversos cambios
+SELECT finish_date, str_to_date(finish_date, '%Y-%m-%d %H:%i:%s') AS fecha FROM limpieza;
+SELECT finish_date, date_format(str_to_date(finish_date, '%Y-%m-%d %H:%i:%s'), '%Y-%m-%d') AS fecha FROM limpieza;
+--- Lo anterior convierte el formato de horas,mins y segundos al sólo año, mes, día
+SELECT finish_date, str_to_date(finish_date, '%Y-%m-%d') AS fd FROM limpieza; 
+--#solo separar la fecha (aunque se recomienda usar juntas date_format(str_to_date(field,'MiFormato de fecha'))
+SELECT finish_date, str_to_date(finish_date, '%H:%i:%s') AS hour_stamp FROM limpieza; #--#solo separar la hora NO funciona
+SELECT finish_date, date_format(finish_date, '%H:%i:%s') AS hour_stamp FROM limpieza; #--#solo separar la hora (marca de tiempo)
+
+## -- Dividiendo los elementos de la hora
+SELECT finish_date,
+	date_format(finish_date, '%H') AS hora,
+	date_format(finish_date, '%i') AS minutos,
+	date_format(finish_date, '%s') AS segundos,
+	date_format(finish_date, '%H:%i:%s') AS hour_statmp
+FROM limpieza;
+
+/*
+# Diferencia entre timestamp y datetime
+-- timestamp (YYYY-MM-DD H:i:s ---) - DSDE 01 ENERO DE 1970 A LAS 00:00:00 UTC, HASTA MILESIMAS DE SEGUNDO
+-- datetime desde año 1000 a 9999  no tiene en cuenta la zona horaria, hasta segundos
+*/
+
+# ----- Hacer Respaldo de la columna finish_date
+# Añadiendo una nueva columna a la tabla llamada date_backup
+
+ALTER TABLE limpieza ADD COLUMN date_backup TEXT;
+
+# ----- Respaldo de la columna finish_date en date_backup
+UPDATE limpieza SET date_backup = finish_date;
+select * from limpieza;
+
+##--- Hacemos nuestra consulta de ensayo para convertir a formato Y-M-D h:m:s
+SELECT finish_date, str_to_date(finish_date, '%Y-%m-%d %H:%i:%s') AS fecha FROM limpieza;
+
+## Actualizamos
+UPDATE limpieza SET finish_date = str_to_date(finish_date, '%Y-%m-%d %H:%i:%s UTC') WHERE finish_date !='';
+select * from limpieza;
+
+##--- Separar nuestro campo finish_date en varias columnas usando para
+# fecha = date(finish_date)
+# hora = time(finish_date)
+
+ALTER TABLE limpieza 
+	ADD COLUMN fecha date,
+	ADD COLUMN hora time;
+
+select * from limpieza;
+
+# ACTUALIZAMOS
+UPDATE limpieza 
+SET 	fecha = date(finish_date),
+	hora = time(finish_date)
+WHERE finish_date IS NOT NULL AND finish_date != '';
+
+select * from limpieza;
+
+
+## EL siguiente paso sería darle formato tambien a la columna finish_date
+## pero es necesario primero garantizar que no tenga espacios en blanco y ponerlos en NULL cuando esten vacios
+## para evitar que nos de error al darle formato de fecha a ese campo
+
+UPDATE limpieza SET finish_date = NULL
+WHERE finish_date = ''
+
+## --- Ahora en el campo finish_date las celdas vacias se volvieron NULL para evitar errores posteriores
+select * from limpieza;
+
+DESCRIBE limpieza;
+##-- Ahora ya podemos actualizar la propiedad de nuestra columna
+ALTER TABLE limpieza MODIFY COLUMN finish_date datetime;
+
+DESCRIBE limpieza; # Ahora ya tenemos el campo finish_date como fecha
+
+### ------ CALCULOS CON FECHAS
+ALTER TABLE limpieza ADD COLUMN age INT;
+DESCRIBE limpieza;
+
+select * from limpieza;
+
+### CALCULAR EDAD DE INGRESO A LA EMPRESA
+##SELECT name, birth_date, start_date, TIMESTAMPDIFF() AS edad_ingreso_empresa FROM limpieza;
+## --- SELECT name, birth_date, start_date, TIMESTAMPDIFF() AS edad_ingreso_empresa FROM limpieza;
+
+#-- EJERCICIO DE CALCULO CON FECHAS
+SELECT name, birth_date, star_date, TIMESTAMPDIFF(year, birth_date, star_date) AS edad_ingreso_empresa FROM limpieza;
+
+###-- CALCULAR LA EDAD DE NUESTROS EMPLEADOS Y ASIGNARLO A UN CAMPO EN ESPECIFICO
+UPDATE limpieza 
+SET age = TIMESTAMPDIFF(YEAR , birth_date, CURDATE());
+
+select AGE from limpieza;
+
+#-- Esta función diferencia en años entre dos fechas (diferencia en años YEAR "year_month", birth_date y fecha actual CURDATE)
+/*
+CALCULAR DIFERENCIAS
+SECOND: Diferencia en segundos.
+MINUTE: Diferencia en minutos.
+HOUR: Diferencia en horas.
+DAY: Diferencia en días.
+WEEK: Diferencia en semanas.
+MONTH: Diferencia en meses.
+QUARTER: Diferencia en trimestres.
+DAY_HOUR: Diferencia en días y horas.
+YEAR_MONTH: Diferencia en años y meses
+*/
+
+select * from limpieza;
+
+
+
+
+
+
+
+------ ENSAYO: - DAR FORMATO A LA FECHA
+SELECT finish_date, CASE 
+	WHEN finish_date LIKE '%/%' THEN date_format(str_to_date(finish_date , '%m/%d/%Y'), '%Y-%m-%d')
+	WHEN finish_date LIKE '%-%' THEN date_format(str_to_date(finish_date , '%m/%d/%Y'), '%Y-%m-%d')
+	ELSE NULL
+END AS new_finish_date
+FROM limpieza;
+
+----------Actualizar la tabla
+UPDATE limpieza
+SET star_date  = CASE 
+	WHEN star_date LIKE '%/%' THEN date_format(str_to_date(star_date ,'%m/%d/%Y'), '%Y-%m-%d')
+	WHEN star_date LIKE '%-%' THEN date_format(str_to_date(star_date ,'%m-%d-%Y'), '%Y-%m-%d')
+	ELSE NULL 
+END;
+
+## MODIFICAR LA PROPIEDAD DE LA COLUMNA
+ALTER TABLE limpieza MODIFY COLUMN star_date date;
+
+
+alter table limpieza  change column name nombre VARCHAR(100);
+
+select * from limpieza;
+##-- CREAR UN NUEVO CAMPO email QUE SE CREE CON DATOS DE OTROS CAMPOS EXISTENTES
+# Nombre, de que campo,a partir de que caracter, y la longitud de letras
+#SELECT nombre,apellido,tipo,CONCAT(SUBSTRING_INDEX(nombre,' ', 1),'_',SUBSTRING( apellido, 1, 2),'.',SUBSTRING(tipo,1,1),'@consulting.com') AS email FROM limpieza;
+SELECT nombre,apellido,tipo,CONCAT(SUBSTRING_INDEX(nombre,' ', 1),'_',SUBSTRING( apellido, 1, 2),'.',SUBSTRING(tipo,1,2),'@consulting.com') AS email FROM limpieza;
+
+## AGREGAR EL CAMPO email a nuestra tabla
+ALTER TABLE limpieza ADD COLUMN email VARCHAR(100);
+DESCRIBE limpieza;
+SELECT * FROM limpieza;
+
+##-- Llenar el campo email con los datos de la consulta con la funcion CONCAT
+UPDATE limpieza SET email = 
+CONCAT(SUBSTRING_INDEX(nombre,' ', 1),'_',SUBSTRING( apellido, 1, 2),'.',SUBSTRING(tipo,1,2),'@consulting.com');
+
+select email from limpieza;
+## CONVERTIR A MINUSCULAS 
+SELECT nombre,apellido,tipo,CONCAT(SUBSTRING_INDEX(LOWER(nombre),' ', 1),'_',SUBSTRING( LOWER(apellido), 1, 2),'.',SUBSTRING(LOWER(tipo),1,2),'@consulting.com') AS email FROM limpieza;
+
+UPDATE limpieza SET email = 
+CONCAT(SUBSTRING_INDEX(LOWER(nombre),' ', 1),'_',SUBSTRING( LOWER(apellido), 1, 2),'.',SUBSTRING(LOWER(tipo),1,2),'@consulting.com');
+
+select email from limpieza;
+
+describe limpieza;
+
+select COUNT(*) from limpieza
+select promotion_date from limpieza where promotion_date != ''
+## -- GENERANDO LAS CONSULTAS FINALES PARA DESPUÉS EXPORTAR
+SELECT id_empleado,nombre,apellido,birth_date,genero,area,salary,star_date,finish_date,promotion_date,tipo,fecha,hora,age,email FROM limpieza;
+
+
+SELECT COUNT(*) FROM limpieza
+WHERE finish_date <= CURDATE() or finish_date IS NULL;
+
+SELECT id_empleado,nombre,apellido,age,genero,area,salary,email FROM limpieza
+WHERE finish_date <= CURDATE() or finish_date IS NULL;
+
+SELECT area, COUNT(*) AS cantidad_empleados FROM limpieza
+GROUP BY area
+ORDER BY cantidad_empleados DESC;
+
+
+
+##################
+##########
+#####
+##
+#
+describe limpieza;
+select * from limpieza ;
+
+
+
