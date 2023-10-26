@@ -1,0 +1,132 @@
+#SELECT `Id?empleado`, Name, Apellido, birth_date, género, area, salary, star_date, finish_date, promotion_date, `type`
+#FROM clean.limpieza
+#where género like 'hombre'
+#; 
+
+########
+/*
+PARA PODER HACER MODIFICACIONES EN UNA BASE DEBERÍA ESTAR HABILITADO CON LOS PARAMETOS "0" o "1"
+Y ESTO SE HACE CON EL COMANDO:
+	SET sql_safe_updates = 0; # Con 0 es posible modificar
+	SET sql_safe_updates = 1; # Con 1 NO se puede modificar
+
+*/
+########
+SELECT `Id?empleado`, Name, Apellido, birth_date, género, area, salary, star_date, finish_date, promotion_date, `type`
+FROM clean.limpieza
+	where género like 'hombre'
+	and area like 'Engineering'
+	and type=1
+;
+#REPLACE CARACTERES ESPECIALES EN campo salary
+select replace(salary,'$','')
+from limpieza;
+
+# hacer update a salary
+update select replace(salary,'$','')
+from limpieza;
+
+describe limpieza
+alter table limpieza change column género genero VARCHAR (15)
+alter table limpieza change column `Id?empleado` id_empleado varchar(20)
+
+
+### 1.- Renombrar tabla
+rename table limpieza to limpieza;
+
+SELECT salary,
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2)) AS salary2 from limpieza;
+
+describe limpieza 
+select * from limpieza
+### Hacer UPDATE
+UPDATE limpieza SET salary = 
+	CAST(TRIM(REPLACE(REPLACE(salary,'$',''),',','')) AS decimal (15,2));
+	
+## modificamos el campo de salary para volverlo entero
+describe limpieza 
+alter table limpieza modify column salary int null;
+
+#-- Hacer SELECT con TRIM para eliminar espacios en blanco.
+SELECT Name, trim(name) as Name
+FROM limpieza
+WHERE length(Name) - length(trim(Name)) > 0;
+
+
+SELECT nombre, trim(nombre) as Nombre
+FROM limpieza
+WHERE length(nombre) - length(trim(nombre)) > 0;
+
+
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE limpieza SET name = TRIM(name)
+WHERE length(name) - length(trim(name)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE limpieza SET apellido = TRIM(apellido)
+WHERE length(apellido) - length(trim(apellido)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE limpieza SET genero = TRIM(genero)
+WHERE length(genero) - length(trim(genero)) > 0;
+
+# HACER UPDATE PARA ELIMINAR ESPACIOS EN BLANCO
+UPDATE limpieza SET area = TRIM(area)
+WHERE length(area) - length(trim(area)) > 0;
+
+
+## modicar los nombres de campos
+alter table limpieza  change column Name name VARCHAR (50)
+alter table limpieza  change column Apellido apellido VARCHAR (50)
+
+select id_empleado ,COUNT(*) from limpieza group by id_empleado;
+select id_empleado ,COUNT(*) from limpieza group by id_empleado having COUNT(*)> 1;
+select genero,COUNT(*) from limpieza group by genero;
+select area,COUNT(*) from limpieza group by area;
+
+
+#### Eliminar Duplicados
+###  1.- Renombrar tabla		
+##   2.- Crear tabla Temp(valores únicos)
+#    3.- Convertir la tabla Temporal en permanente
+
+# Renombrar tabla
+rename table limpieza to conduplicados;
+
+## CREAR TABLA TEMPORAL SIN DUPLICADOS
+CREATE TEMPORARY TABLE temp_limpieza AS
+SELECT DISTINCT * FROM conduplicados;
+
+select COUNT(*) as copia from temp_limpieza
+select COUNT(*) as original from conduplicados
+
+## CONVERTIR TABLA TEMPORAL A PERMANENTE
+create table limpieza as
+select
+	*
+from
+	temp_limpieza; 
+
+### ELIMINAR TABLA CON DATOS TEMPORALES
+DROP TABLE conduplicados;
+
+
+### ELIMINAR DOBLES ESPACIOS EN CAMPOS DE TEXTO
+## CREAMOS DOBLES ESPACIOS PARA HACER LA PRACTICA
+UPDATE limpieza SET area = REPLACE(area,' ','     ');
+
+
+### USAMOS UNA EXPRESIÓN REGULAR PARA ELMINAR MÁS DE DOS ESPACIOS EN UN CAMPO
+## REGEXP '\\s{2,}' = busca dos o mas espacios
+## REGEXP '\\s{210,}' = si cambiamos el 2 por el 10, buscaría 10 o más espacios en blanco
+SELECT area FROM limpieza
+WHERE area REGEXP '\\s{2,}';
+
+
+
+select COUNT(*) from limpieza;
+select * from limpieza;
+select * from conduplicados c
+
+describe conduplicados 
